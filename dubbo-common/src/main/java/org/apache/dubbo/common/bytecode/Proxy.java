@@ -79,7 +79,7 @@ public abstract class Proxy {
         }
 
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < ics.length; i++) {
+        for (int i = 0; i < ics.length; i++) { // 遍历接口列表
             String itf = ics[i].getName();
             if (!ics[i].isInterface()) {
                 throw new RuntimeException(itf + " is not a interface.");
@@ -87,7 +87,7 @@ public abstract class Proxy {
 
             Class<?> tmp = null;
             try {
-                tmp = Class.forName(itf, false, cl);
+                tmp = Class.forName(itf, false, cl);// 重新加载接口类
             } catch (ClassNotFoundException e) {
             }
 
@@ -135,26 +135,34 @@ public abstract class Proxy {
         String pkg = null;
         ClassGenerator ccp = null, ccm = null;
         try {
+            // 创建 ClassGenerator 对象
             ccp = ClassGenerator.newInstance(cl);
 
             Set<String> worked = new HashSet<>();
             List<Method> methods = new ArrayList<>();
 
             for (int i = 0; i < ics.length; i++) {
+                // 检测接口访问级别是否为 protected 或 privete
                 if (!Modifier.isPublic(ics[i].getModifiers())) {
+                    // 获取接口包名
                     String npkg = ics[i].getPackage().getName();
                     if (pkg == null) {
                         pkg = npkg;
                     } else {
                         if (!pkg.equals(npkg)) {
+                            // 非 public 级别的接口必须在同一个包下，否者抛出异常
                             throw new IllegalArgumentException("non-public interfaces from different packages");
                         }
                     }
                 }
                 ccp.addInterface(ics[i]);
 
+                // 遍历接口方法
                 for (Method method : ics[i].getMethods()) {
+                    // 获取方法描述，可理解为方法签名
                     String desc = ReflectUtils.getDesc(method);
+                    // 如果方法描述字符串已在 worked 中，则忽略。考虑这种情况，
+                    // A 接口和 B 接口中包含一个完全相同的方法
                     if (worked.contains(desc)) {
                         continue;
                     }
@@ -164,19 +172,28 @@ public abstract class Proxy {
                     worked.add(desc);
 
                     int ix = methods.size();
+                    // 获取方法返回值类型
                     Class<?> rt = method.getReturnType();
+                    // 获取参数列表
                     Class<?>[] pts = method.getParameterTypes();
 
+                    // 生成 Object[] args = new Object[1...N]
                     StringBuilder code = new StringBuilder("Object[] args = new Object[").append(pts.length).append("];");
                     for (int j = 0; j < pts.length; j++) {
+                        // 生成 args[1...N] = ($w)$1...N;
                         code.append(" args[").append(j).append("] = ($w)$").append(j + 1).append(";");
                     }
+                    // 生成 InvokerHandler 接口的 invoker 方法调用语句，如下：
+                    // Object ret = handler.invoke(this, methods[1...N], args);
                     code.append(" Object ret = handler.invoke(this, methods[").append(ix).append("], args);");
+                    // 返回值不为 void
                     if (!Void.TYPE.equals(rt)) {
+                        // 生成返回语句，形如 return (java.lang.String) ret;
                         code.append(" return ").append(asArgument(rt, "ret")).append(";");
                     }
 
                     methods.add(method);
+                    // 添加方法名、访问控制符、参数列表、方法代码等信息到 ClassGenerator 中
                     ccp.addMethod(method.getName(), method.getModifiers(), rt, pts, method.getExceptionTypes(), code.toString());
                 }
             }

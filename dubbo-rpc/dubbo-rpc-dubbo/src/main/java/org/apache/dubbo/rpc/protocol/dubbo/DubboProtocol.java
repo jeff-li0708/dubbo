@@ -282,7 +282,7 @@ public class DubboProtocol extends AbstractProtocol {
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
         URL url = invoker.getUrl();
 
-        // export service.
+        // export service. 获取服务标识，理解成服务坐标也行。由服务组名，服务名，服务版本号以及端口组成
         String key = serviceKey(url);
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
         exporterMap.put(key, exporter);
@@ -303,14 +303,14 @@ public class DubboProtocol extends AbstractProtocol {
             }
         }
 
-        openServer(url);
-        optimizeSerialization(url);
+        openServer(url);//启动服务
+        optimizeSerialization(url);//序列化服务
 
         return exporter;
     }
 
     private void openServer(URL url) {
-        // find server.
+        // find server. 服务IP:端口，例如172.20.36.4:20880
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(IS_SERVER_KEY, true);
@@ -334,13 +334,13 @@ public class DubboProtocol extends AbstractProtocol {
         url = URLBuilder.from(url)
                 // send readonly event when server closes, it's enabled by default
                 .addParameterIfAbsent(CHANNEL_READONLYEVENT_SENT_KEY, Boolean.TRUE.toString())
-                // enable heartbeat by default
+                // enable heartbeat by default // 添加心跳检测配置到 url中，默认一分钟
                 .addParameterIfAbsent(HEARTBEAT_KEY, String.valueOf(DEFAULT_HEARTBEAT))
-                .addParameter(CODEC_KEY, DubboCodec.NAME)
+                .addParameter(CODEC_KEY, DubboCodec.NAME)// 添加编码解码器参数
                 .build();
-        String str = url.getParameter(SERVER_KEY, DEFAULT_REMOTING_SERVER);
+        String str = url.getParameter(SERVER_KEY, DEFAULT_REMOTING_SERVER);// 获取 server 参数，默认为 netty
 
-        if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str)) {
+        if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str)) {// 通过 SPI 检测是否存在 server 参数所代表的 Transporter 拓展，不存在则抛出异常
             throw new RpcException("Unsupported server type: " + str + ", url: " + url);
         }
 
@@ -351,9 +351,9 @@ public class DubboProtocol extends AbstractProtocol {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);
         }
 
-        str = url.getParameter(CLIENT_KEY);
+        str = url.getParameter(CLIENT_KEY);// 获取 client 参数，可指定 netty，mina
         if (str != null && str.length() > 0) {
-            Set<String> supportedTypes = ExtensionLoader.getExtensionLoader(Transporter.class).getSupportedExtensions();
+            Set<String> supportedTypes = ExtensionLoader.getExtensionLoader(Transporter.class).getSupportedExtensions();// 获取所有的 Transporter 实现类名称集合，比如 supportedTypes = [netty, mina]
             if (!supportedTypes.contains(str)) {
                 throw new RpcException("Unsupported client type: " + str);
             }

@@ -68,7 +68,7 @@ public abstract class AbstractServer extends AbstractEndpoint implements Server 
         this.accepts = url.getParameter(ACCEPTS_KEY, DEFAULT_ACCEPTS);
         this.idleTimeout = url.getParameter(IDLE_TIMEOUT_KEY, DEFAULT_IDLE_TIMEOUT);
         try {
-            doOpen();
+            doOpen(); //开启服务
             if (logger.isInfoEnabled()) {
                 logger.info("Start " + getClass().getSimpleName() + " bind " + getBindAddress() + ", export " + getLocalAddress());
             }

@@ -371,7 +371,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (!shouldExport()) {
             return;
         }
-
+        //是否延迟导出
         if (shouldDelay()) {
             DELAY_EXPORT_EXECUTOR.schedule(this::doExport, getDelay(), TimeUnit.MILLISECONDS);
         } else {
@@ -449,7 +449,9 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
+        //加载注册中心链接
         List<URL> registryURLs = loadRegistries(true);
+        //遍历 protocols，并在每个协议下导出服务
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), group, version);
             ProviderModel providerModel = new ProviderModel(pathKey, ref, interfaceClass);
@@ -563,6 +565,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
         if (ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                 .hasExtension(url.getProtocol())) {
+            // 加载 ConfiguratorFactory，并生成 Configurator 实例，然后通过实例配置 url
             url = ExtensionLoader.getExtensionLoader(ConfiguratorFactory.class)
                     .getExtension(url.getProtocol()).getConfigurator(url).configure(url);
         }
@@ -572,10 +575,12 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
 
             // export to local if the config is not remote (export to remote only when config is remote)
+            // scope != remote，导出到本地
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
+            // scope != local，导出到远程
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (!isOnlyInJvm() && logger.isInfoEnabled()) {
                     logger.info("Export dubbo service " + interfaceClass.getName() + " to url " + url);

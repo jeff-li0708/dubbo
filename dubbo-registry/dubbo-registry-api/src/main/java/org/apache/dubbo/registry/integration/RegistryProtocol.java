@@ -193,23 +193,23 @@ public class RegistryProtocol implements Protocol {
 
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
-        URL registryUrl = getRegistryUrl(originInvoker);
+        URL registryUrl = getRegistryUrl(originInvoker); //获取注册中心URL,例如zookeeper://111.231.111.246:2181/org.apache.dubbo.registry.RegistryService?application=dubbo-demo-api-provider&dubbo=2.0.2&export=dubbo%3A%2F%2F172.20.36.4%3A20880%2Forg.apache.dubbo.demo.DemoService%3Fanyhost%3Dtrue%26application%3Ddubbo-demo-api-provider%26bind.ip%3D172.20.36.4%26bind.port%3D20880%26deprecated%3Dfalse%26dubbo%3D2.0.2%26dynamic%3Dtrue%26generic%3Dfalse%26interface%3Dorg.apache.dubbo.demo.DemoService%26methods%3DsayHello%26pid%3D8464%26register%3Dtrue%26release%3D%26side%3Dprovider%26timestamp%3D1587018990662&pid=8464&timestamp=1587018976023
         // url to export locally
-        URL providerUrl = getProviderUrl(originInvoker);
+        URL providerUrl = getProviderUrl(originInvoker);//获取服务提供者URL，例如dubbo://172.20.36.4:20880/org.apache.dubbo.demo.DemoService?anyhost=true&application=dubbo-demo-api-provider&bind.ip=172.20.36.4&bind.port=20880&deprecated=false&dubbo=2.0.2&dynamic=true&generic=false&interface=org.apache.dubbo.demo.DemoService&methods=sayHello&pid=8464&register=true&release=&side=provider&timestamp=1587018990662
 
         // Subscribe the override data
         // FIXME When the provider subscribes, it will affect the scene : a certain JVM exposes the service and call
         //  the same service. Because the subscribed is cached key with the name of the service, it causes the
         //  subscription information to cover.
-        final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);
-        final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);
+        final URL overrideSubscribeUrl = getSubscribedOverrideUrl(providerUrl);//获取订阅URL
+        final OverrideListener overrideSubscribeListener = new OverrideListener(overrideSubscribeUrl, originInvoker);//创建监听器
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
 
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
-        //export invoker
+        //export invoker 导出服务（也就是启动服务，启用后netty的服务开始监听）
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
-        // url to registry
+        // url to registry 2.1 获取注册实例
         final Registry registry = getRegistry(originInvoker);
         final URL registeredProviderUrl = getRegisteredProviderUrl(providerUrl, registryUrl);
         ProviderInvokerWrapper<T> providerInvokerWrapper = ProviderConsumerRegTable.registerProvider(originInvoker,
@@ -217,7 +217,7 @@ public class RegistryProtocol implements Protocol {
         //to judge if we need to delay publish
         boolean register = registeredProviderUrl.getParameter("register", true);
         if (register) {
-            register(registryUrl, registeredProviderUrl);
+            register(registryUrl, registeredProviderUrl);//注册服务
             providerInvokerWrapper.setReg(true);
         }
 
@@ -242,8 +242,8 @@ public class RegistryProtocol implements Protocol {
         String key = getCacheKey(originInvoker);
 
         return (ExporterChangeableWrapper<T>) bounds.computeIfAbsent(key, s -> {
-            Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);
-            return new ExporterChangeableWrapper<>((Exporter<T>) protocol.export(invokerDelegate), originInvoker);
+            Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);// 创建 Invoker 为委托类对象
+            return new ExporterChangeableWrapper<>((Exporter<T>) protocol.export(invokerDelegate), originInvoker);// 调用 protocol 的 export 方法导出服务
         });
     }
 

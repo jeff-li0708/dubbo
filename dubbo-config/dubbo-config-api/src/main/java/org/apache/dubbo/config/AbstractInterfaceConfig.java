@@ -330,8 +330,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         if (CollectionUtils.isNotEmpty(registries)) {
             for (RegistryConfig config : registries) {
                 String address = config.getAddress();
-                if (StringUtils.isEmpty(address)) {
-                    address = ANYHOST_VALUE;
+                if (StringUtils.isEmpty(address)) { //zookeeper://111.231.111.246:2181
+                    address = ANYHOST_VALUE; //若 address 为空，则将其设为 0.0.0.0
                 }
                 if (!RegistryConfig.NO_AVAILABLE.equalsIgnoreCase(address)) {
                     Map<String, String> map = new HashMap<String, String>();

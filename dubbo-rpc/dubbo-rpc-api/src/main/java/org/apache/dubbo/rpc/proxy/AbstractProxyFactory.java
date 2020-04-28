@@ -40,11 +40,12 @@ public abstract class AbstractProxyFactory implements ProxyFactory {
     @Override
     public <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException {
         Class<?>[] interfaces = null;
-        String config = invoker.getUrl().getParameter(INTERFACES);
+        String config = invoker.getUrl().getParameter(INTERFACES);// 获取接口列表
         if (config != null && config.length() > 0) {
-            String[] types = COMMA_SPLIT_PATTERN.split(config);
+            String[] types = COMMA_SPLIT_PATTERN.split(config);// 切分接口列表
             if (types != null && types.length > 0) {
                 interfaces = new Class<?>[types.length + 2];
+                // 设置服务接口类和 EchoService.class 到 interfaces 中
                 interfaces[0] = invoker.getInterface();
                 interfaces[1] = EchoService.class;
                 for (int i = 0; i < types.length; i++) {

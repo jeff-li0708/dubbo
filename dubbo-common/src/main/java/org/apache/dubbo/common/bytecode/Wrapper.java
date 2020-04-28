@@ -137,9 +137,13 @@ public abstract class Wrapper {
         c2.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
         c3.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
 
+        // pts 用于存储成员变量名和类型
         Map<String, Class<?>> pts = new HashMap<>(); // <property name, property types>
+        // ms 用于存储方法描述信息（可理解为方法签名）及 Method 实例
         Map<String, Method> ms = new LinkedHashMap<>(); // <method desc, Method instance>
+        // mns 为方法名列表
         List<String> mns = new ArrayList<>(); // method names.
+        // dmns 用于存储“定义在当前类中的方法”的名称
         List<String> dmns = new ArrayList<>(); // declaring method names.
 
         // get all public field.

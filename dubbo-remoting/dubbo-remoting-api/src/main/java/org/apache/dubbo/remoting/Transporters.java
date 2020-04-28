@@ -53,7 +53,7 @@ public class Transporters {
         } else {
             handler = new ChannelHandlerDispatcher(handlers);
         }
-        return getTransporter().bind(url, handler);
+        return getTransporter().bind(url, handler);//getTransporter()返回Transporter的适配器类对象，该对象的类是在运行时动态创建的，类名为 TransporterAdaptive，TransporterAdaptive 会在运行时根据传入的 URL 参数决定加载什么类型的 Transporter，默认为 NettyTransporter
     }
 
     public static Client connect(String url, ChannelHandler... handler) throws RemotingException {
